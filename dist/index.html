@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>排序算法可视化演示</title>
+    <!-- 引入外部资源 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet">
+    <!-- 代码高亮 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- 支持多种编程语言 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/c.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js"></script>
+    
+    <!-- 引入Chart.js用于性能指标图表 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- 引入Three.js用于3D可视化 -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+
+    <!-- Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#36CFC9',
+                        neutral: '#64748b',
+                        comparing: '#f97316',
+                        sorted: '#10b981',
+                        background: {
+                            DEFAULT: '#f8fafc',
+                            dark: '#0f172a',
+                        },
+                        card: {
+                            DEFAULT: '#ffffff',
+                            dark: '#1e293b',
+                        },
+                        text: {
+                            DEFAULT: '#1e293b',
+                            dark: '#f1f5f9',
+                        },
+                        border: {
+                            DEFAULT: '#e2e8f0',
+                            dark: '#334155',
+                        },
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                        code: ['Fira Code', 'monospace'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                },
+            }
+        }
+    </script>
+
+    <!-- 主题变量 -->
+    <style>
+        :root {
+            /* 浅色主题 */
+            --color-primary: #165DFF;
+            --color-secondary: #36CFC9;
+            --color-neutral: #64748b;
+            --color-comparing: #f97316;
+            --color-sorted: #10b981;
+            --color-background: #f8fafc;
+            --color-card: #ffffff;
+            --color-text: #1e293b;
+            --color-border: #e2e8f0;
+        }
+        
+        .dark {
+            /* 深色主题 - 优化配色方案 */
+            --color-primary: #60a5fa;
+            --color-secondary: #5eead4;
+            --color-neutral: #94a3b8;
+            --color-comparing: #f97316;
+            --color-sorted: #4ade80;
+            --color-background: #182235;
+            --color-card: #233149;
+            --color-text: #e2e8f0;
+            --color-border: #334155;
+        }
+        
+        /* 全局主题应用 */
+        body {
+            background-color: var(--color-background);
+            color: var(--color-text);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        /* 代码块深色模式 */
+        .dark pre {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            border-color: #334155;
+        }
+        
+        .dark code {
+            background-color: #1e293b;
+            color: #e2e8f0;
+        }
+        
+        /* 按钮深色模式 */
+        .dark button {
+            transition: all 0.2s ease;
+        }
+        
+        /* 主题切换按钮深色模式 */
+        .dark #theme-toggle {
+            background-color: #334155;
+            color: #e2e8f0;
+        }
+        
+        .dark #theme-toggle:hover {
+            background-color: #475569;
+        }
+        
+        /* 输入框和滑块深色模式 */
+        .dark input[type="range"],
+        .dark input[type="text"],
+        .dark select {
+            background-color: #233149;
+            color: #e2e8f0;
+            border-color: #334155;
+        }
+        
+        /* 算法标签页深色模式 */
+        .dark .algorithm-tab,
+        .dark .code-tab,
+        .dark .explanation-tab {
+            color: #94a3b8;
+            border-color: transparent;
+        }
+        
+        .dark .algorithm-tab:hover,
+        .dark .code-tab:hover,
+        .dark .explanation-tab:hover {
+            color: #e2e8f0;
+        }
+        
+        /* 算法信息卡片深色模式 */
+        .dark .algorithm-explanation .bg-gradient-to-r {
+            background-color: #233149;
+            background-image: none;
+            border-color: #334155;
+        }
+        
+        /* 步骤指示器深色模式 */
+        .dark .step-indicator {
+            background-color: #334155;
+            color: #94a3b8;
+        }
+        
+        .dark .step-indicator.active {
+            background-color: var(--color-primary);
+            color: white;
+        }
+        
+        /* 表格深色模式 */
+        .dark table {
+            border-color: #334155;
+        }
+        
+        .dark th,
+        .dark td {
+            border-color: #334155;
+        }
+        
+        /* 键盘快捷键提示的深色模式 */
+        .dark .keyboard-shortcuts {
+            background-color: rgba(35, 49, 73, 0.95);
+            border-color: var(--color-border);
+        }
+        
+        .dark .keyboard-shortcuts h4 {
+            color: var(--color-text);
+        }
+        
+        .dark .keyboard-shortcuts .key {
+            background-color: var(--color-border);
+            color: var(--color-text);
+            border-color: var(--color-border);
+        }
+        
+        .dark .keyboard-shortcuts .action {
+            color: var(--color-neutral);
+        }
+        
+        /* 代码折叠/展开按钮深色模式 */
+        .dark .code-toggle {
+            color: #94a3b8;
+        }
+        
+        .dark .code-toggle:hover {
+            color: var(--color-primary);
+        }
+    </style>
+    
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .transition-height {
+                transition-property: height;
+                transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+                transition-duration: 300ms;
+            }
+            .bar-shadow {
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            }
+            .stat-card {
+                @apply bg-card dark:bg-card-dark rounded-xl p-4 shadow-md dark:shadow-gray-700/30 hover:shadow-lg dark:hover:shadow-gray-600/30 transition-all duration-300 border border-gray-100 dark:border-gray-700;
+            }
+            .control-btn {
+                @apply px-3 py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-1 whitespace-nowrap text-sm md:text-base;
+            }
+            .control-btn-primary {
+                @apply bg-primary text-white hover:bg-primary/90 active:bg-primary/80;
+            }
+            .control-btn-secondary {
+                @apply bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 active:bg-gray-300 dark:active:bg-gray-600;
+            }
+        }
+        
+        /* 算法对比布局 */
+        .single-algorithm {
+            display: block;
+        }
+        
+        .compare-algorithms {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        
+        /* 响应式设计：竖屏状态下的布局调整 */
+        @media (max-width: 768px) {
+            /* 竖屏状态下，对比算法改为单列显示 */
+            .compare-algorithms {
+                grid-template-columns: 1fr;
+            }
+            
+            /* 确保代码块在小屏幕上不会超出屏幕 */
+            pre {
+                overflow-x: auto;
+                white-space: pre;
+                word-wrap: normal;
+            }
+            
+            /* 调整表格样式，确保在小屏幕上可以滚动 */
+            #explanation table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            
+            /* 优化算法信息卡片在小屏幕上的显示 */
+            .algorithm-explanation .grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 2px;
+            }
+            
+            /* 优化步骤指示器在小屏幕上的显示 */
+            .step-by-step .flex {
+                overflow-x: auto;
+                padding-bottom: 8px;
+            }
+            
+            /* 优化复杂度图表在小屏幕上的显示 */
+            #complexityChart {
+                height: 300 !important;
+            }
+            
+            /* 优化算法选项卡在小屏幕上的显示 */
+            #explanation .flex.overflow-x-auto {
+                padding-bottom: 8px;
+            }
+            
+            /* 调整算法说明区域的内边距 */
+            #explanation > div {
+                padding: 1rem;
+            }
+            
+            /* 调整标题字体大小 */
+            #explanation h2 {
+                font-size: 1.25rem;
+            }
+            
+            #explanation h3 {
+                font-size: 1.125rem;
+            }
+        }
+        
+        /* 进一步优化小屏幕下的算法信息卡片 */
+        @media (max-width: 480px) {
+            .algorithm-explanation .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            /* 调整步骤内容的最小高度 */
+            .step-content {
+                min-height: 100px !important;
+            }
+        }
+        
+        /* 对比算法容器 */
+        .algorithm-left, .algorithm-right {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 确保对比算法中的标题对齐 */
+        .algorithm-left h3, .algorithm-right h3 {
+            margin-top: 0;
+            margin-bottom: 12px;
+            font-size: 1.125rem;
+            font-weight: 600;
+            text-align: left;
+            height: 28px; /* 设置固定高度，确保左右标题对齐 */
+            line-height: 28px; /* 设置行高，确保文字垂直居中 */
+        }
+        
+        /* 确保对比算法中的子标题对齐 */
+        .algorithm-left h4, .algorithm-right h4 {
+            margin-top: 0;
+            margin-bottom: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-align: left;
+            height: 24px; /* 设置固定高度，确保左右子标题对齐 */
+            line-height: 24px; /* 设置行高，确保文字垂直居中 */
+        }
+        
+        /* 算法原理部分 */
+        .algorithm-left > div:nth-child(1),
+        .algorithm-right > div:nth-child(1) {
+            height: 200px; /* 设置固定高度 */
+            overflow-y: auto; /* 内容溢出时显示滚动条 */
+            margin-bottom: 24px;
+            padding-right: 8px; /* 为滚动条预留空间 */
+        }
+        
+        /* 复杂度分析部分 */
+        .algorithm-left > div:nth-child(2),
+        .algorithm-right > div:nth-child(2) {
+            height: 250px; /* 设置固定高度 */
+            overflow-y: auto; /* 内容溢出时显示滚动条 */
+            margin-bottom: 24px;
+            padding-right: 8px; /* 为滚动条预留空间 */
+        }
+        
+        /* 适用场景部分 */
+        .algorithm-left > div:nth-child(3),
+        .algorithm-right > div:nth-child(3) {
+            height: 200px; /* 设置固定高度 */
+            overflow-y: auto; /* 内容溢出时显示滚动条 */
+            margin-bottom: 0;
+            padding-right: 8px; /* 为滚动条预留空间 */
+        }
+        
+        /* 统一段落样式 */
+        .algorithm-left p, .algorithm-right p {
+            margin-top: 0;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+        
+        /* 统一列表样式 */
+        .algorithm-left ul, .algorithm-right ul {
+            margin-top: 0;
+            margin-bottom: 12px;
+            padding-left: 20px;
+        }
+        
+        .algorithm-left li, .algorithm-right li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        
+        /* 统一复杂度分析中的网格布局 */
+        .algorithm-left .grid, .algorithm-right .grid {
+            margin-bottom: 0;
+        }
+        
+        /* 对比算法表格行高亮 */
+        #explanation table tbody tr.bg-primary\/10 {
+            background-color: rgba(22, 93, 255, 0.1);
+        }
+        
+        #explanation table tbody tr.bg-orange-50 {
+            background-color: rgba(249, 115, 22, 0.05);
+        }
+        
+        #explanation table tbody tr.font-semibold {
+            font-weight: 600;
+        }
+        
+        /* 算法日志样式 */
+        .array-name {
+            color: inherit;
+        }
+        
+        .array-index {
+            color: #165DFF; /* 使用primary颜色 */
+            font-weight: 500;
+        }
+        
+        .comparison-operator {
+            color: #f97316; /* 使用comparing颜色 */
+            font-weight: 600;
+        }
+        
+        .important-operation {
+            color: #ef4444; /* 使用红色突出显示重要操作 */
+            font-weight: 700;
+        }
+        
+        /* 快捷键提示样式 */
+        .keyboard-shortcuts {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            font-size: 14px;
+            max-width: 300px;
+        }
+        
+        .keyboard-shortcuts h4 {
+            margin: 0 0 12px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .keyboard-shortcuts ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .keyboard-shortcuts li {
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .keyboard-shortcuts .key {
+            background-color: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-family: 'Fira Code', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            color: #334155;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .keyboard-shortcuts .action {
+            color: #64748b;
+            font-size: 13px;
+        }
+        
+        /* 拖拽样式 */
+        .bar-shadow {
+            cursor: grab;
+            user-select: none;
+        }
+        
+        .bar-shadow:active {
+            cursor: grabbing;
+        }
+    </style>
+
+  <script type="module" crossorigin src="/assets/index-BVT9VAtX.js"></script>
+</head>
+
+<body class="font-inter bg-background dark:bg-background-dark text-gray-800 dark:text-text-dark min-h-screen flex m-0 p-0">
+    <!-- 模块容器 -->
+    <div id="app" class="flex flex-col min-h-screen w-full"></div>
+
+    <!-- 主脚本 -->
+    
+    <!-- 测试脚本 -->
+</body>
+
+</html>
