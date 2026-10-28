@@ -131,6 +131,12 @@ function toIIFE(mainPath) {
     return app.currentAlgorithm === 'quickSort' ? '已切到 quickSort' : false;
   });
   ck('无未捕获异常', () => (errors.length === 0 ? '干净' : false));
+  ck('页面只渲染一份', () => {
+    // 防回归：入口若被实例化两次，整页会渲染两遍（header/main 各出现两次）
+    const headers = document.querySelectorAll('#app > header').length;
+    const mains = document.querySelectorAll('#app > main').length;
+    return headers === 1 && mains === 1 ? `header×${headers} main×${mains}` : false;
+  });
 
   console.log('=== 运行时测试（真实构建产物）===');
   let pass = 0;

@@ -388,7 +388,7 @@ export class SortingVisualizerApp {
           })
         }
         initializeAlgorithmView(t, n) {
-          const e = document.getElementById(`algorithm-name-${t}`),
+          const e = this.resolveCompetitionElement(`algorithm-name-${t}`),
             i = e ? e.textContent : "",
             r = this.getAlgorithmName(n);
           i !== r && (e && (e.textContent = r), this.competitionManager.updateAlgorithmInstance(t, n), this.isCompetitionRunning || this.initCompetitionVisualization())
@@ -447,6 +447,18 @@ export class SortingVisualizerApp {
           }
           this.updateCompetitionLayout(n), this.competitionPerformanceChart && (this.competitionPerformanceChart.data.datasets[2].hidden = n < 3, this.competitionPerformanceChart.data.datasets[3].hidden = n < 4, this.competitionPerformanceChart.update("none"))
         }
+        resolveCompetitionElement(elementId) {
+          // 竞赛模式存在多套布局（competition-layout-2/-3/-4），0、1 号赛位的 id 在每套里同名。
+          // document.getElementById 只会返回文档中第一个匹配项（即隐藏的 -2 里那套），
+          // 导致切到 3/4 算法时更新的是隐藏节点。这里优先在「当前可见」的布局内查找。
+          const layouts = document.querySelectorAll("#competition-layout-2, #competition-layout-3, #competition-layout-4");
+          for (const layout of layouts) {
+            if (layout.classList.contains("hidden")) continue;
+            const found = layout.querySelector(`[id="${elementId}"]`);
+            if (found) return found;
+          }
+          return document.getElementById(elementId);
+        }
         updateCompetitionLayout(t = 2) {
           for (let e = 2; e <= 4; e++) {
             const t = document.getElementById(`competition-layout-${e}`);
@@ -473,7 +485,7 @@ export class SortingVisualizerApp {
           this.competitionArray && this.competitionArray.length === n || (this.competitionArray = this.generateArray(n, "random")), this.competitionManager.ensureAlgorithmInstanceCount(2), this.competitionManager.initAlgorithmArrays(this.competitionArray);
           for (let s = 0; s < 2; s++) this.competitionManager.updateAlgorithmInstance(s, this.competitionAlgorithms[s]);
           for (let s = 0; s < 2; s++) {
-            const t = document.getElementById(`algorithm-name-${s}`);
+            const t = this.resolveCompetitionElement(`algorithm-name-${s}`);
             t && (t.textContent = this.getAlgorithmName(this.competitionAlgorithms[s]))
           }
           const competitionArraySizeDisplayText = document.getElementById("competition-array-size-display");
@@ -486,13 +498,13 @@ export class SortingVisualizerApp {
           const competitionPauseBtnInput = document.getElementById("competition-pause-btn");
           competitionPauseBtnInput && (competitionPauseBtnInput.disabled = !0, competitionPauseBtnInput.textContent = "暂停", competitionPauseBtnInput.className = "w-full px-4 py-2 bg-yellow-500 text-white rounded-lg font-medium hover:bg-yellow-600 transition-all duration-200 shadow-sm hover:shadow-md active:scale-95"), this.competitionManager.activeAlgorithmCount, this.competitionManager.initAlgorithmArrays(this.competitionArray || this.array);
           for (let n = 0; n < 4; n++) {
-            const t = document.getElementById(`algorithm-status-${n}`);
+            const t = this.resolveCompetitionElement(`algorithm-status-${n}`);
             t && (t.textContent = "就绪", t.className = "text-xs font-medium");
-            const e = document.getElementById(`comparison-count-${n}`);
+            const e = this.resolveCompetitionElement(`comparison-count-${n}`);
             e && (e.textContent = "0");
-            const i = document.getElementById(`swap-count-${n}`);
+            const i = this.resolveCompetitionElement(`swap-count-${n}`);
             i && (i.textContent = "0");
-            const r = document.getElementById(`execution-time-${n}`);
+            const r = this.resolveCompetitionElement(`execution-time-${n}`);
             r && (r.textContent = "0ms")
           }
           this.resetCompetitionPerformanceData(), this.initCompetitionVisualization()
@@ -595,11 +607,11 @@ export class SortingVisualizerApp {
           const t = Math.floor((Date.now() - this.competitionStartTime) / 1e3),
             competitionElapsedTimeText = document.getElementById("competition-elapsed-time");
           competitionElapsedTimeText && (competitionElapsedTimeText.textContent = Date.now() - this.competitionStartTime + "ms"), this.competitionPerformanceChart && (this.competitionPerformanceChart.data.labels.includes(t.toString()) || this.competitionPerformanceChart.data.labels.push(t.toString()), this.competitionManager.getAlgorithmInstances().forEach((n, e) => {
-            const i = document.getElementById(`comparison-count-${e}`);
+            const i = this.resolveCompetitionElement(`comparison-count-${e}`);
             i && (i.textContent = n.comparisonCount);
-            const r = document.getElementById(`swap-count-${e}`);
+            const r = this.resolveCompetitionElement(`swap-count-${e}`);
             r && (r.textContent = n.swapCount);
-            const a = document.getElementById(`execution-time-${e}`);
+            const a = this.resolveCompetitionElement(`execution-time-${e}`);
             a && (a.textContent = `${n.getExecutionTime()}ms`);
             const s = this.competitionPerformanceChart.data.datasets[2 * e],
               o = this.competitionPerformanceChart.data.datasets[2 * e + 1];
@@ -642,7 +654,7 @@ export class SortingVisualizerApp {
           t.start();
           const i = e(t.array);
           t.sortHistory = i.history, t.currentStep = 0;
-          const r = document.getElementById(`algorithm-status-${n}`);
+          const r = this.resolveCompetitionElement(`algorithm-status-${n}`);
           r && (r.textContent = "运行中", r.className = "text-xs font-medium text-yellow-500"), setTimeout(() => {
             this.runAlgorithmSteps(t, n)
           }, 0)
@@ -658,7 +670,7 @@ export class SortingVisualizerApp {
               }
             } else {
               t.finish();
-              const e = document.getElementById(`algorithm-status-${n}`);
+              const e = this.resolveCompetitionElement(`algorithm-status-${n}`);
               e && (e.textContent = "完成", e.className = "text-xs font-medium text-green-500"), this.checkCompetitionCompletion()
             }
         }
@@ -668,7 +680,7 @@ export class SortingVisualizerApp {
           t.comparisonCount = e.comparisonCount, t.swapCount = e.swapCount, t.array = [...e.array], this.renderCompetitionArray(e.array, n, e.highlightIndices || [], e.sortedIndices || []), t.currentStep++
         }
         renderCompetitionArray(t, n, e = [], i = []) {
-          const r = document.getElementById(`bars-container-${n}`);
+          const r = this.resolveCompetitionElement(`bars-container-${n}`);
           if (!r) return;
           r.innerHTML = "";
           const a = r.clientWidth,
@@ -705,7 +717,7 @@ export class SortingVisualizerApp {
         checkCompetitionCompletion() {
           const t = this.competitionManager.getAlgorithmInstances();
           t.every(t => !t.isSorting && !t.isPaused) && (this.isCompetitionRunning = !1, this.competitionEndTime = Date.now(), t.forEach((t, n) => {
-            const e = document.getElementById(`algorithm-status-${n}`);
+            const e = this.resolveCompetitionElement(`algorithm-status-${n}`);
             e && (e.textContent = "完成", e.className = "text-xs font-medium text-green-500")
           }), this.updateCompetitionPerformance(), this.competitionChartUpdateInterval && (clearInterval(this.competitionChartUpdateInterval), this.competitionChartUpdateInterval = null))
         }
@@ -714,7 +726,7 @@ export class SortingVisualizerApp {
           const competitionPauseBtnText = document.getElementById("competition-pause-btn");
           competitionPauseBtnText && (competitionPauseBtnText.textContent = "继续", competitionPauseBtnText.className = "w-full px-4 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-all duration-200 shadow-sm hover:shadow-md active:scale-95"), this.competitionManager.getAlgorithmInstances().forEach((t, n) => {
             t.pause();
-            const e = document.getElementById(`algorithm-status-${n}`);
+            const e = this.resolveCompetitionElement(`algorithm-status-${n}`);
             e && (e.textContent = "暂停", e.className = "text-xs font-medium text-orange-500")
           })
         }
@@ -723,7 +735,7 @@ export class SortingVisualizerApp {
           const competitionPauseBtnText = document.getElementById("competition-pause-btn");
           competitionPauseBtnText && (competitionPauseBtnText.textContent = "暂停", competitionPauseBtnText.className = "w-full px-4 py-2 bg-yellow-500 text-white rounded-lg font-medium hover:bg-yellow-600 transition-all duration-200 shadow-sm hover:shadow-md active:scale-95"), this.competitionManager.getAlgorithmInstances().forEach((t, n) => {
             t.isSorting = !0, t.isPaused = !1;
-            const e = document.getElementById(`algorithm-status-${n}`);
+            const e = this.resolveCompetitionElement(`algorithm-status-${n}`);
             e && (e.textContent = "运行中", e.className = "text-xs font-medium text-yellow-500"), this.runAlgorithmSteps(t, n)
           })
         }
@@ -1674,8 +1686,4 @@ export class SortingVisualizerApp {
           this.stepBackBtn.disabled = this.currentStep <= 0, this.stepForwardBtn.disabled = this.currentStep >= this.sortHistory.length - 1
         }
       }
-      window.SortingVisualizer = SortingVisualizerApp, document.addEventListener("DOMContentLoaded", () => {
-        new SortingVisualizerApp, setTimeout(() => {
-          hljs.highlightAll()
-        }, 100)
-      });
+      window.SortingVisualizer = SortingVisualizerApp;
