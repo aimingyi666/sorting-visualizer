@@ -26,37 +26,13 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: 安装依赖
-        run: npm install
+        run: npm ci
 
       - name: 算法回归测试
         run: npm run test:algorithms
 
       - name: 构建
         run: npm run build
-
-      - name: 诊断（仅失败时）
-        if: failure()
-        run: |
-          echo "=== 环境信息 ==="
-          node -v && npm -v
-          echo "=== 平台二进制 ==="
-          ls node_modules/@esbuild/ 2>&1 || true
-          ls node_modules/@rollup/ 2>&1 || true
-          echo "=== 重新构建并捕获错误 ==="
-          set +e
-          BUILD_OUT=$(npx vite build 2>&1)
-          echo "$BUILD_OUT"
-          # 把错误转成 annotation（公开可读，便于排查）
-          FIRST_ERR=$(echo "$BUILD_OUT" | grep -iE "error|Error:" | head -3 | tr '
-' ' ')
-          echo "::error title=Vite构建错误::$FIRST_ERR"
-          # 同时写入 summary
-          {
-            echo '### 构建诊断'
-            echo '```'
-            echo "$BUILD_OUT" | head -50
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: 运行时冒烟测试
         run: npm run test:runtime
@@ -68,3 +44,23 @@ jobs:
           name: dist
           path: dist/
           retention-days: 7
+
+      # 构建失败时把信息写入 job summary，便于排查
+      - name: 诊断（仅失败时）
+        if: failure()
+        run: |
+          {
+            echo '### 诊断信息'
+            echo ''
+            echo '```'
+            echo "node: $(node -v)"
+            echo "npm: $(npm -v)"
+            echo ''
+            echo '--- @esbuild 平台包 ---'
+            ls node_modules/@esbuild/ 2>&1 || true
+            echo '--- @rollup 平台包 ---'
+            ls node_modules/@rollup/ 2>&1 || true
+            echo '--- 重新构建输出 ---'
+            npx vite build 2>&1 | head -60 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
