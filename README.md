@@ -3,12 +3,26 @@
 > 一个用于教学与算法理解的交互式排序可视化工具，支持 9 种经典排序算法的 2D/3D 实时演示、逐步执行、复杂度分析与中英双语界面。
 
 <p align="left">
+  <a href="https://github.com/aimingyi666/sorting-visualizer/actions/workflows/ci.yml">
+    <img alt="CI" src="https://github.com/aimingyi666/sorting-visualizer/actions/workflows/ci.yml/badge.svg">
+  </a>
+  <a href="https://github.com/aimingyi666/sorting-visualizer/actions/workflows/deploy-pages.yml">
+    <img alt="Deploy" src="https://github.com/aimingyi666/sorting-visualizer/actions/workflows/deploy-pages.yml/badge.svg">
+  </a>
   <img alt="Vite" src="https://img.shields.io/badge/Vite-5.x-646CFF?logo=vite&logoColor=white">
   <img alt="Node" src="https://img.shields.io/badge/Node-%3E%3D18-339933?logo=node.js&logoColor=white">
   <img alt="Three.js" src="https://img.shields.io/badge/Three.js-0.160-000000?logo=three.js&logoColor=white">
   <img alt="Chart.js" src="https://img.shields.io/badge/Chart.js-4.x-FF6384?logo=chart.js&logoColor=white">
   <img alt="License" src="https://img.shields.io/badge/License-MIT-blue.svg">
 </p>
+
+<p align="left">
+  <a href="https://aimingyi666.github.io/sorting-visualizer/">
+    <img alt="在线演示" src="https://img.shields.io/badge/在线演示-立即体验-165DFF?style=for-the-badge">
+  </a>
+</p>
+
+> **[▶ 在线演示](https://aimingyi666.github.io/sorting-visualizer/)** —— 无需安装，打开即用。
 
 ---
 
