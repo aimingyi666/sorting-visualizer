@@ -17,6 +17,7 @@ import { AlgorithmModeManager } from './algorithm-mode.js';
 import { defineField } from '../utils/define-field.js';
 import { SortHistoryCache } from './history-cache.js';
 import { algorithmMeta } from '../data/algorithm-meta.js';
+import { algorithmMap } from '../data/algorithm-map.js';
 import { languageManager } from './i18n.js';
 
 
@@ -126,24 +127,101 @@ export class SortingVisualizerApp {
           })
         }
         init3DVisualization() {
-          if (this.barsContainer3D = this.barsContainer3D || document.getElementById("bars-container-3d"), window.THREE) this.barsContainer3D && window.Visualization3D && (this.visualization3D = new window.Visualization3D("bars-container-3d"));
-          else {
-            const t = document.createElement("script");
-            t.src = "https://unpkg.com/three@0.160.0/build/three.min.js", t.onload = () => {
-              const t = document.createElement("script");
-              t.src = "https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js", t.onload = () => {
-                import("../visualization-3d.js").then(t => {
-                  window.Visualization3D = t.Visualization3D, this.barsContainer3D && window.Visualization3D && (this.visualization3D = new window.Visualization3D("bars-container-3d"))
-                })
-              }, t.onerror = () => {
-                console.error("Failed to load OrbitControls.js, 3D visualization may not work properly"), import("../visualization-3d.js").then(t => {
-                  window.Visualization3D = t.Visualization3D
-                })
-              }, document.head.appendChild(t)
-            }, t.onerror = () => {
-              console.error("Failed to load Three.js, 3D visualization may not work properly")
-            }, document.head.appendChild(t)
+          this.barsContainer3D = this.barsContainer3D || document.getElementById("bars-container-3d");
+          const removePlaceholder = () => {
+            const placeholder = this.barsContainer3D && this.barsContainer3D.querySelector(".three-placeholder");
+            if (placeholder) placeholder.remove();
+          };
+          if (window.THREE && window.Visualization3D) {
+            if (this.barsContainer3D) {
+              try {
+                this.visualization3D = new window.Visualization3D("bars-container-3d");
+                removePlaceholder();
+              } catch (error) {
+                console.error("[3D] 初始化失败:", error);
+              }
+            }
+            return;
           }
+          if (!window.THREE) {
+            this.loadThreeLibrary().then(() => {
+              removePlaceholder();
+              if (this.barsContainer3D) {
+                try {
+                  this.visualization3D = new window.Visualization3D("bars-container-3d");
+                } catch (error) {
+                  console.error("[3D] 初始化失败:", error);
+                }
+              }
+            }).catch((error) => {
+              console.error("[3D] Three.js 加载失败，3D 模式不可用:", error);
+            });
+            return;
+          }
+          import("../visualization-3d.js").then((module) => {
+            window.Visualization3D = module.Visualization3D;
+            removePlaceholder();
+            if (this.barsContainer3D) {
+              try {
+                this.visualization3D = new window.Visualization3D("bars-container-3d");
+              } catch (error) {
+                console.error("[3D] 初始化失败:", error);
+              }
+            }
+          });
+        }
+        /**
+         * 加载 Three.js。
+         *
+         * three 自 r148 起移除了 examples/js（UMD 版 OrbitControls），
+         * 因此 0.160 的 OrbitControls 在 CDN 上是 404，THREE.OrbitControls 永远为空。
+         * 这里按「UMD 资源完整」优先的顺序尝试，0.137 / 0.128 仍带 examples/js。
+         * OrbitControls 属于可选增强，失败不影响 3D 渲染，仅失去鼠标交互。
+         */
+        loadThreeLibrary() {
+          if (this.threeLoadPromise) return this.threeLoadPromise;
+          const candidates = [
+            {
+              core: "https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js",
+              controls: "https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/OrbitControls.js"
+            },
+            {
+              core: "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js",
+              controls: "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"
+            },
+            {
+              core: "https://unpkg.com/three@0.160.0/build/three.min.js",
+              controls: null
+            }
+          ];
+          const loadScript = (src) => new Promise((resolve, reject) => {
+            const existing = document.querySelector(`script[src="${src}"]`);
+            if (existing) {
+              resolve();
+              return;
+            }
+            const script = document.createElement("script");
+            script.src = src;
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error(`加载失败: ${src}`));
+            document.head.appendChild(script);
+          });
+          const tryCandidate = (index) => {
+            if (index >= candidates.length) return Promise.reject(new Error("所有 Three.js 源均不可用"));
+            const candidate = candidates[index];
+            return loadScript(candidate.core).then(() => {
+              if (!candidate.controls) return undefined;
+              return loadScript(candidate.controls).catch(() => {
+                console.warn("[3D] OrbitControls 加载失败，将退化为静态 3D（无鼠标交互）");
+              });
+            }).then(() => {
+              return import("../visualization-3d.js").then((module) => {
+                window.Visualization3D = module.Visualization3D;
+              });
+            }).catch(() => tryCandidate(index + 1));
+          };
+          this.threeLoadPromise = tryCandidate(0);
+          return this.threeLoadPromise;
         }
         initFloatingPanel() {
           if (document.getElementById("floating-panel")) return;
@@ -222,11 +300,23 @@ export class SortingVisualizerApp {
           this.is3DMode = !1, this.toggle2DBtn && this.toggle3DBtn && (this.toggle2DBtn.classList.remove("bg-white", "text-primary"), this.toggle2DBtn.classList.add("bg-primary", "text-white"), this.toggle3DBtn.classList.remove("bg-primary", "text-white"), this.toggle3DBtn.classList.add("bg-white", "text-primary"), this.barsContainer.classList.remove("hidden"), this.barsContainer3D.classList.add("hidden"), this.renderArray())
         }
         switchTo3D() {
-          this.is3DMode = !0, this.toggle2DBtn && this.toggle3DBtn && (this.toggle3DBtn.classList.remove("bg-white", "text-primary"), this.toggle3DBtn.classList.add("bg-primary", "text-white"), this.toggle2DBtn.classList.remove("bg-primary", "text-white"), this.toggle2DBtn.classList.add("bg-white", "text-primary"), this.barsContainer.classList.add("hidden"), this.barsContainer3D.classList.remove("hidden"), this.barsContainer3D && import("../visualization-3d.js").then(t => {
-            this.visualization3D = new t.Visualization3D("bars-container-3d"), this.renderArray()
-          }).catch(t => {
-            console.error("Failed to initialize 3D visualization:", t), this.switchTo2D()
-          }))
+          this.is3DMode = !0, this.toggle2DBtn && this.toggle3DBtn && (this.toggle3DBtn.classList.remove("bg-white", "text-primary"), this.toggle3DBtn.classList.add("bg-primary", "text-white"), this.toggle2DBtn.classList.remove("bg-primary", "text-white"), this.toggle2DBtn.classList.add("bg-white", "text-primary"), this.barsContainer && this.barsContainer.classList.add("hidden"), this.barsContainer3D && this.barsContainer3D.classList.remove("hidden"));
+          if (!this.barsContainer3D) return void this.switchTo2D();
+          // 首次切换到 3D 时 THREE 可能还没加载，必须先确保依赖就绪再实例化
+          const ensureReady = window.THREE && window.Visualization3D
+            ? Promise.resolve()
+            : this.loadThreeLibrary();
+          ensureReady.then(() => {
+            const placeholder = this.barsContainer3D.querySelector(".three-placeholder");
+            if (placeholder) placeholder.remove();
+            if (!this.visualization3D) {
+              this.visualization3D = new window.Visualization3D("bars-container-3d");
+            }
+            this.renderArray();
+          }).catch((error) => {
+            console.error("[3D] 初始化失败，已回退到 2D:", error);
+            this.switchTo2D();
+          });
         }
         initCompetitionPerformanceChart() {
           const competitionPerformanceChartEl = document.getElementById("competition-performance-chart");
@@ -639,21 +729,30 @@ export class SortingVisualizerApp {
           })
         }
         executeAlgorithm(t, n) {
-          const e = {
-            bubble: p,
-            selection: m,
-            insertion: h,
-            quick: g,
-            merge: u,
-            heap: b,
-            shell: x,
-            counting: y,
-            radix: f
-          } [t.algorithmName];
-          if (!e) return;
+          // 竞赛内部用短标识（bubble/quick/...），需先映射到 algorithmMap 的完整键。
+          // 原压缩代码此处直接引用压缩后的函数名（p/m/h/...），语义化改名后已失效，
+          // 导致竞赛模式点击开始无任何反应（ReferenceError: p is not defined）。
+          const algorithmKey = {
+            bubble: "bubbleSort",
+            selection: "selectionSort",
+            insertion: "insertionSort",
+            quick: "quickSort",
+            merge: "mergeSort",
+            heap: "heapSort",
+            shell: "shellSort",
+            counting: "countingSort",
+            radix: "radixSort"
+          }[t.algorithmName];
+          const sortImpl = algorithmKey ? algorithmMap[algorithmKey] : null;
+          if (!sortImpl) {
+            console.error(`[竞赛] 未找到算法实现: ${t.algorithmName}`);
+            const statusEl = this.resolveCompetitionElement(`algorithm-status-${n}`);
+            statusEl && (statusEl.textContent = "不支持", statusEl.className = "text-xs font-medium text-red-500");
+            return;
+          }
           t.start();
-          const i = e(t.array);
-          t.sortHistory = i.history, t.currentStep = 0;
+          const result = sortImpl(t.array);
+          t.sortHistory = result.history, t.currentStep = 0;
           const r = this.resolveCompetitionElement(`algorithm-status-${n}`);
           r && (r.textContent = "运行中", r.className = "text-xs font-medium text-yellow-500"), setTimeout(() => {
             this.runAlgorithmSteps(t, n)

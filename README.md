@@ -11,7 +11,7 @@
   </a>
   <img alt="Vite" src="https://img.shields.io/badge/Vite-5.x-646CFF?logo=vite&logoColor=white">
   <img alt="Node" src="https://img.shields.io/badge/Node-%3E%3D18-339933?logo=node.js&logoColor=white">
-  <img alt="Three.js" src="https://img.shields.io/badge/Three.js-0.160-000000?logo=three.js&logoColor=white">
+  <img alt="Three.js" src="https://img.shields.io/badge/Three.js-0.137-000000?logo=three.js&logoColor=white">
   <img alt="Chart.js" src="https://img.shields.io/badge/Chart.js-4.x-FF6384?logo=chart.js&logoColor=white">
   <img alt="License" src="https://img.shields.io/badge/License-MIT-blue.svg">
 </p>
@@ -64,7 +64,7 @@
 ### 可视化
 
 - **2D 柱状图**：经典的条形高度映射，颜色区分「待排序 / 比较中 / 已就位 / 基准点」
-- **3D 场景**：基于 Three.js 渲染，可通过 OrbitControls 自由旋转缩放，观察空间结构
+- **3D 场景**：基于 Three.js 渲染，可通过 OrbitControls 自由旋转缩放，观察空间结构（OrbitControls 缺失时自动降级为静态 3D，不影响渲染）
 - **实时指标图表**：基于 Chart.js 绘制比较次数与交换次数随时间的变化曲线
 
 ### 交互控制
@@ -483,7 +483,7 @@ npm run test:runtime        # 运行时冒烟（10 项检查）
 | 构建工具 | Vite 5 | 冷启动快，开发体验好，构建产物精简 |
 | 语言 | 原生 ES Modules | 无框架依赖，聚焦算法本身 |
 | 2D 渲染 | DOM + CSS | 便于用 CSS 过渡实现流畅动画 |
-| 3D 渲染 | Three.js | 成熟的 WebGL 封装，含 OrbitControls |
+| 3D 渲染 | Three.js 0.137（CDN） | 成熟的 WebGL 封装。选用 0.137 是因为 three 自 r148 起移除了 `examples/js`（UMD 版），更高版本的 OrbitControls 在 CDN 上为 404 |
 | 图表 | Chart.js | 轻量、API 简洁 |
 | 代码高亮 | highlight.js | 支持 C / Python / Go / Java |
 | 样式 | Tailwind CSS（CDN） | 原子化，便于快速调整 |

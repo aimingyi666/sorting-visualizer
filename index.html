@@ -25,9 +25,13 @@
     <!-- 引入Chart.js用于性能指标图表 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- 引入Three.js用于3D可视化 -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- 引入Three.js用于3D可视化
+         注意：three 自 r148 起移除了 examples/js（UMD 版），0.160 的 OrbitControls
+         在 CDN 上返回 404，THREE.OrbitControls 会一直为空。故固定使用仍带 UMD
+         资源的 0.137。若此处加载失败，visualizer-app 中的 loadThreeLibrary()
+         会自动回退到备用源。 -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.137.0/examples/js/controls/OrbitControls.js"></script>
 
     <!-- Tailwind 配置 -->
     <script>

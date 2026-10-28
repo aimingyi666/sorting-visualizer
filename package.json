@@ -18,9 +18,10 @@
     "build": "vite build",
     "preview": "vite preview --port 3000",
     "serve": "python -m http.server 3000 --bind 127.0.0.1 --directory dist",
-    "test": "npm run test:algorithms && npm run test:runtime",
+    "test": "npm run test:algorithms && npm run test:runtime && npm run test:3d",
     "test:algorithms": "node tests/test-algorithms.mjs",
-    "test:runtime": "node tests/smoke-test.cjs"
+    "test:runtime": "node tests/smoke-test.cjs",
+    "test:3d": "node tests/test-3d.cjs"
   },
   "devDependencies": {
     "jsdom": "^25.0.0",

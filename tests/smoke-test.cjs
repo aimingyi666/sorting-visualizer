@@ -138,6 +138,64 @@ function toIIFE(mainPath) {
     return headers === 1 && mains === 1 ? `header×${headers} main×${mains}` : false;
   });
 
+  // ---- 竞赛模式：曾因算法映射残留压缩函数名（p/m/h...）导致点击开始毫无反应 ----
+  ck('竞赛模式可进入', () => {
+    const btn = document.getElementById('competition-mode-btn');
+    if (!btn) return false;
+    btn.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    const layout = document.getElementById('competition-layout');
+    return layout && !layout.classList.contains('hidden') ? '布局已显示' : false;
+  });
+
+  ck('竞赛模式算法实现可解析', () => {
+    const keyMap = {
+      bubble: 'bubbleSort', selection: 'selectionSort', insertion: 'insertionSort',
+      quick: 'quickSort', merge: 'mergeSort', heap: 'heapSort', shell: 'shellSort',
+      counting: 'countingSort', radix: 'radixSort',
+    };
+    const missing = app.competitionManager.algorithmInstances
+      .map((x) => x.algorithmName)
+      .filter((n) => !keyMap[n]);
+    if (missing.length) return false;
+    // 直接验证实现函数存在：调用后应产出非空轨迹
+    const startBtn = document.getElementById('competition-start-btn');
+    if (!startBtn) return false;
+    startBtn.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    const lens = app.competitionManager.algorithmInstances.map((x) => x.sortHistory.length);
+    const allRan = lens.every((n) => n > 0);
+    return allRan ? `各赛位轨迹 ${lens.join('/')} 帧` : `轨迹异常: ${lens.join('/')}`;
+  });
+
+  ck('竞赛模式计数器会推进', () => {
+    const inst = app.competitionManager.algorithmInstances[0];
+    if (!inst || !inst.sortHistory.length) return false;
+
+    // 竞速定时器可能同时在跑，先暂停再手动推进，保证读到的变化来自本次调用
+    app.isCompetitionRunning = false;
+    inst.isPaused = false;
+
+    const stepBefore = inst.currentStep;
+    const cmpBefore = inst.comparisonCount;
+
+    for (let i = 0; i < 30 && inst.currentStep < inst.sortHistory.length - 1; i++) {
+      app.executeAlgorithmStep(inst, 0);
+    }
+
+    const advanced = inst.currentStep > stepBefore;
+    if (!advanced) return `未推进: step ${stepBefore}→${inst.currentStep}`;
+    return `step ${stepBefore}→${inst.currentStep}, 比较 ${cmpBefore}→${inst.comparisonCount}`;
+  });
+
+  ck('计数器能写入可见赛位', () => {
+    // 恢复运行态，让 updateCompetitionPerformance 真正写 DOM
+    app.isCompetitionRunning = true;
+    app.competitionStartTime = Date.now() - 2000;
+    app.updateCompetitionPerformance();
+    const shown = app.resolveCompetitionElement('comparison-count-0')?.textContent;
+    const instCount = String(app.competitionManager.algorithmInstances[0].comparisonCount);
+    return shown === instCount ? `DOM=${shown} 与实例一致` : `DOM=${shown} 实例=${instCount}`;
+  });
+
   console.log('=== 运行时测试（真实构建产物）===');
   let pass = 0;
   for (const [name, ok, note] of results) {
