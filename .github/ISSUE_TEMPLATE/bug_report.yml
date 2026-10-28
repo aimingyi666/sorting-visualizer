@@ -1,0 +1,60 @@
+name: 缺陷报告
+description: 报告一个可复现的问题
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈。为了更快定位问题，请尽量填写完整信息。
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 问题描述
+      description: 清楚描述出现了什么现象
+      placeholder: 例如：切换到 3D 模式后，条形图不显示，控制台报错 xxx
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+      description: 一步步说明如何重现
+      placeholder: |
+        1. 打开页面
+        2. 选择「快速排序」
+        3. 点击「开始」
+        4. 观察到 ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为
+      placeholder: 你期望它应该怎样表现
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: 浏览器与版本
+      placeholder: 例如 Chrome 131 / Edge 131 / Safari 18
+    validations:
+      required: true
+
+  - type: input
+    id: node
+    attributes:
+      label: Node.js 版本
+      placeholder: 例如 v22.11.0
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 控制台报错
+      description: 打开开发者工具，把相关报错粘贴到这里
+      render: shell
