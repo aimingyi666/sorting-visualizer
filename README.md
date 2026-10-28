@@ -131,7 +131,8 @@ git clone https://github.com/aimingyi666/sorting-visualizer.git
 cd sorting-visualizer
 
 # 2. 安装依赖
-npm install
+npm install        # 开发时使用
+# npm ci           # 需要严格按 lockfile 复现依赖时使用（CI 即采用此方式）
 
 # 3. 启动开发服务器（默认 http://127.0.0.1:3000）
 npm run dev
@@ -148,10 +149,23 @@ npm run preview    # 本地预览生产构建
 
 ### 部署到 GitHub Pages
 
+仓库已内置 GitHub Actions 自动部署，无需手动推送 `gh-pages` 分支。
+
+**一次性配置**：在仓库 **Settings → Pages → Build and deployment** 中，将 **Source** 设为 **GitHub Actions**。
+
+**之后**：推送到 `main` 即自动触发 `.github/workflows/deploy-pages.yml`，流水线为
+
+```
+npm ci → 算法回归测试 → vite build → 运行时冒烟测试 → 上传产物 → 部署 Pages
+```
+
+部署完成后站点地址为 <https://aimingyi666.github.io/sorting-visualizer/>。如需手动触发，可在 Actions 页面选择 **Deploy to GitHub Pages** → **Run workflow**。
+
+**部署到其他静态托管**（Vercel / Netlify / Nginx 子目录等）时，只需：
+
 ```bash
 npm run build
-# 将 dist/ 目录推送到 gh-pages 分支
-npx gh-pages -d dist
+# 上传 dist/ 目录内容即可，产物使用相对路径，不要求站根目录
 ```
 
 ---
@@ -445,6 +459,19 @@ npm run test:runtime        # 运行时冒烟（10 项检查）
 
 > **实现说明**：jsdom 不支持 `<script type="module">`，而构建产物含有 `import.meta`（3D 模块动态加载需要），因此测试会先用 esbuild 把产物转为 IIFE 再交给 jsdom 执行。这样测的仍是真实的构建结果，只是换了加载方式。
 
+### 持续集成
+
+`.github/workflows/ci.yml` 在每次推送到 `main` 或提交 PR 时运行，矩阵覆盖 Node.js **18 / 20 / 22**：
+
+| 步骤 | 说明 |
+|---|---|
+| 安装依赖 | `npm ci`，严格按 lockfile 安装 |
+| 算法回归测试 | 9 种算法 × 8 组输入 = 72 个用例 |
+| 构建 | `vite build` |
+| 运行时冒烟测试 | 对真实构建产物执行 10 项检查 |
+
+构建失败时，workflow 会自动执行诊断步骤，把 `node_modules/@rollup`、`node_modules/@esbuild` 的平台二进制清单，以及 `vite build --debug` 的完整输出写入 Job Summary，便于快速区分「代码问题」与「环境 / 依赖问题」。
+
 ---
 
 ## 技术实现
@@ -528,6 +555,8 @@ renderArray(frame) 重绘条形与指针
 - 补齐测试（算法回归 + 运行时冒烟）并接入 `npm test`
 - 完善 README、目录结构与模块文档
 - 修复 `index.html` 中资源绝对路径问题，使构建产物可部署到任意子目录
+- 接入 GitHub Actions：CI 三版本矩阵（Node.js 18 / 20 / 22）+ 自动部署 GitHub Pages
+- 重建 `package-lock.json`：修正平台包元数据（`libc` 字段误写为 `gnu`，导致 npm 判定 Linux 二进制不兼容而静默跳过安装），并将下载源统一指向官方 registry，解决 CI 在 `vite build` 阶段报 `Cannot find module @rollup/rollup-linux-x64-gnu` 的问题
 
 > **给未来的自己**：这次恢复之所以可行，完全依赖构建产物中保留了可读的函数名与字段名。如果当初开启 sourcemap，可以直接 1:1 还原，不必花数小时逆向。**请始终保留 sourcemap。**
 
