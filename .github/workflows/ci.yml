@@ -35,6 +35,18 @@ jobs:
       - name: 构建
         run: npm run build
 
+      - name: 诊断（仅失败时）
+        if: failure()
+        run: |
+          echo "=== node/npm 版本 ==="
+          node -v && npm -v
+          echo "=== esbuild 平台包 ==="
+          ls node_modules/@esbuild/ || true
+          echo "=== rollup 平台包 ==="
+          ls node_modules/@rollup/ || true
+          echo "=== 直接调用 vite ==="
+          npx vite build 2>&1 | head -40 || true
+
       - name: 运行时冒烟测试
         run: npm run test:runtime
 
