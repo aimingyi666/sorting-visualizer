@@ -1,7 +1,7 @@
 {
   "name": "sorting-visualizer",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.1.1",
   "type": "module",
   "description": "排序算法可视化 —— 9 种算法的 2D/3D 实时演示，含步骤解说、复杂度分析与双语界面",
   "keywords": [
@@ -22,14 +22,9 @@
     "test:algorithms": "node tests/test-algorithms.mjs",
     "test:runtime": "node tests/smoke-test.cjs"
   },
-  "dependencies": {
-    "chart.js": "^4.4.0",
-    "highlight.js": "^11.9.0",
-    "three": "^0.160.0"
-  },
   "devDependencies": {
     "jsdom": "^25.0.0",
-    "vite": "^5.2.0"
+    "vite": "^5.4.21"
   },
   "engines": {
     "node": ">=18"
